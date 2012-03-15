@@ -67,12 +67,14 @@ int console_getc(FILE *unused) {
 				}
 			}
 
-			if (input == '\b' || input == '\x7F') {
-				if (console_read_pointer > console_buffer) {
+			if (input == '\b' || input == '\x7f') {
+				if (console_write_pointer > console_buffer) {
 					console_used_putc('\b', NULL);
 					console_used_putc(' ', NULL);
 					console_used_putc('\b', NULL);
 					console_write_pointer--;
+				} else {
+					console_used_putc('\a', NULL);
 				}
 			}
 		}
