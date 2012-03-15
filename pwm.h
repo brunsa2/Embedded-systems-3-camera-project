@@ -8,6 +8,10 @@
 #ifndef PWM
 #define PWM
 
+#include <inttypes.h>
+
+#include "atmega32.h"
+
 /**
  * PWM channels
  */
@@ -15,7 +19,7 @@
 #define PWM_CHANNEL_1 1
 
 /**
- * Initialize PWM system for pulse every 20 ms (no pulse by default)
+ * Initialize PWM system for pulse every 20 ms (1.5 ms pulse by default)
  */
 void pwm_init(void);
 
@@ -24,6 +28,9 @@ void pwm_init(void);
  * @param channel PWM channel
  * @param length PWM pulse length in microseconds
  */
-void pwm_set_pulse_length(
+ // TODO: Return error code if not initted or bad channel or so on
+ // TODO: Make all 16-bit register writes with C use one line instead of two
+ // TODO: Map channels 0 and 1 in an array to write to indexed by channel number
+void pwm_set_pulse_length(uint8_t channel, uint16_t pulse_length);
 
 #endif

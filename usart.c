@@ -42,6 +42,7 @@ void usart_init(uint32_t clock, uint16_t baud, uint8_t flags) {
  * @param data Data byte to transmit
  * @param unusued Unused file descriptor to enable stdio use
  */
+ // TODO: Error codes
 int usart_putc(char data, FILE *unused) {
 	if (usart_is_initialized) {
 		while (!(UCSRA & (1 << UDRE)));
@@ -55,6 +56,7 @@ int usart_putc(char data, FILE *unused) {
  * @param unused Unused file descriptor to enable stdio use
  * @return Byte from USART
  */
+// TODO: Error codes
 int usart_getc(FILE *unused) {
 	if (usart_is_initialized) {
 		while (!(UCSRA & (1 << RXC)));

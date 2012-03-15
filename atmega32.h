@@ -10,10 +10,21 @@
 
 #define _VECTOR(N) __vector_ ## N
 
+/* Status register */
+
+#define SREG (*((volatile uint8_t *)(0x5f)))
+
 /* Stack */
 
 #define STACK_HIGH (*((volatile uint8_t *)(0x5e)))
 #define STACK_LOW (*((volatile uint8_t *)(0x5d)))
+
+/* GPIO ports */
+
+#define DDRD (*((volatile uint8_t *)(0x31)))
+
+#define P4 4
+#define P5 5
 
 /* USART I/O ports */
 
@@ -48,7 +59,19 @@
 /* Timer/Counter 1 ports */
 
 #define TCCR1A (*((volatile uint8_t *)(0x4f)))
+#define COM1A1 7
+#define COM1A0 6
+#define COM1B1 5
+#define COM1B0 4
+#define WGM11 1
+#define WGM10 0
+
 #define TCCR1B (*((volatile uint8_t *)(0x4e)))
+#define WGM13 4
+#define WGM12 3
+#define CS12 2
+#define CS11 1
+#define CS10 0
 
 #define OCR1AH (*((volatile uint8_t *)(0x4b)))
 #define OCR1AL (*((volatile uint8_t *)(0x4a)))
@@ -71,14 +94,21 @@
 #define __INTR_ATTRS used, externally_visible
 
 #define ISR(vector) \
-    void vector (void) __attribute__ ((signal,__INTR_ATTRS)); \
-    void vector (void)
+    void vector(void) __attribute__ ((signal,__INTR_ATTRS)); \
+    void vector(void)
+
+/* Naked functions and interrupts */
 
 #define NAKED_ISR(vector) \
-	void vector (void) __attribute__ ((signal, naked,__INTR_ATTRS)); \
-	void vector (void)
+	void vector(void) __attribute__ ((signal, naked,__INTR_ATTRS)); \
+	void vector(void)
+
+#define NAKED_FUNCTION(function) \
+	void function(void) __attribute__ ((naked, noinline)); \
+	void function(void)
 
 /* Clothing for naked functions */
+
 #define SAVE_CONTEXT() \
 	asm volatile ( \
 		"push r0 \n\t" \
@@ -158,5 +188,15 @@
 	)
 
 #define LEAVE_NAKED_ISR() asm("reti");
+#define LEAVE_NAKED_FUNCTION() asm("ret");
+
+/* Critical sections */
+
+#define ENTER_CRITICAL_SECTION() \
+	uint8_t flags = SREG; \
+	asm volatile ("cli");
+	
+#define LEAVE_CRITICAL_SECTION() \
+	SREG = flags;
 
 #endif

@@ -24,7 +24,7 @@
 /**
  * Length of each time quantum (tenth ms)
  */
-#define QUANTUM_MILLISECOND_LENGTH 20000
+#define QUANTUM_MILLISECOND_LENGTH 1000
 
 /**
  * Stack size
@@ -33,9 +33,20 @@
 
 /**
  * Initialize operating system
- *
- * @param idle_stack Pointer to top of stack frame for idle process
  */
-void os_init(void *idle_stack);
+void os_init(void);
+
+/**
+ * Add new task to operating system
+ */
+void os_add_task(void (*task)(void), char *name);
+
+/**
+ * Delay task for specified number of ticks
+ *
+ * @param pid Process ID to delay
+ * @param ticks Number of ticks to delay
+ */
+void os_delay(uint8_t pid, uint32_t ticks);
 
 #endif
