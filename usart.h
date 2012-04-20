@@ -14,6 +14,7 @@
 #include <stdio.h>
 
 #include "atmega32.h"
+#include "os.h"
 
 /**
  * Enable transmitting

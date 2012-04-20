@@ -11,7 +11,6 @@
 #define OS
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "atmega32.h"
@@ -24,7 +23,7 @@
 /**
  * Length of each time quantum (tenth ms)
  */
-#define QUANTUM_MILLISECOND_LENGTH 1000
+#define QUANTUM_MILLISECOND_LENGTH 2000
 
 /**
  * Stack size
@@ -34,12 +33,12 @@
 /**
  * Initialize operating system
  */
-void os_init(void);
+void os_init(char *stack, uint16_t stack_size, void (*task)(void), char *name);
 
 /**
  * Add new task to operating system
  */
-void os_add_task(void (*task)(void), char *name);
+void os_add_task(char *stack, uint16_t stack_size, void (*task)(void), char *name);
 
 /**
  * Delay task for specified number of ticks
@@ -48,5 +47,11 @@ void os_add_task(void (*task)(void), char *name);
  * @param ticks Number of ticks to delay
  */
 void os_delay(uint8_t pid, uint32_t ticks);
+
+/**
+ *
+ * @return Current PID
+ */
+uint8_t os_get_current_process(void);
 
 #endif

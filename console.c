@@ -96,3 +96,28 @@ int console_getc(FILE *unused) {
 int console_putc(char char_to_put, FILE *unused) {
 	return console_used_putc(char_to_put, unused);
 }
+
+/**
+ * Put string to the console
+ * @param string_to_push String to write to console
+ * @param unused File stream to enable stdio
+ */
+void console_puts(char *string_to_put, FILE *unused) {
+	while(*string_to_put != '\0')
+			console_putc(*string_to_put++, unused);
+}
+
+/**
+ * Get string from the console
+ * @param string_to_get String to get from console
+ * @param length Maximum length of string
+ */
+void console_gets(char *string_to_get, uint8_t length, FILE *unused) {
+	char *current_character;
+	int character;
+	for(character = 0, current_character = string_to_get; character != '\n' && length > 0; length--, current_character++) {
+		character = console_getc(unused);
+		*current_character = (char) character;
+	}
+	*current_character = '\0';
+}

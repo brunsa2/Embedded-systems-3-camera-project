@@ -45,7 +45,7 @@ void usart_init(uint32_t clock, uint16_t baud, uint8_t flags) {
  // TODO: Error codes
 int usart_putc(char data, FILE *unused) {
 	if (usart_is_initialized) {
-		while (!(UCSRA & (1 << UDRE)));
+		while (!(UCSRA & (1 << UDRE))) os_delay(os_get_current_process(), 1000);
 		UDR = data;
 	}
 	return 0;
@@ -59,7 +59,7 @@ int usart_putc(char data, FILE *unused) {
 // TODO: Error codes
 int usart_getc(FILE *unused) {
 	if (usart_is_initialized) {
-		while (!(UCSRA & (1 << RXC)));
+		while (!(UCSRA & (1 << RXC))) os_delay(os_get_current_process(), 1000);
 		return UDR;
 	}
 	return 0;

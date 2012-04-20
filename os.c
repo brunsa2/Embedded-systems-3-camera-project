@@ -9,6 +9,7 @@
 
 #include "os.h"
 #include "pwm.h"
+#include "usart.h"
 
 #define OS_UNINITIALIZED_STATE 0
 #define OS_RUNNING_STATE 1
@@ -52,7 +53,7 @@ NAKED_FUNCTION(schedule) {
  */
  // TODO: Pass pointer to init task and init task space, set process to -1 and schedule() to call process 0, the init process.
  // TODO: os_init gets called first, this moves to init task stack space, os_start_multitasking fires up the timer
-void os_init(void) {
+void os_init(char *stack, uint16_t stack_size, void (*task)(void), char *name) {
 	for (uint8_t pcb_index = 0; pcb_index < NUMBER_OF_PROCESSES; pcb_index++) {
 		pcb[pcb_index].state = OS_UNINITIALIZED_STATE;
 		strcpy(pcb[pcb_index].name, "");
@@ -60,14 +61,16 @@ void os_init(void) {
 	}
 
 	pcb[0].state = OS_RUNNING_STATE;
-	strcpy(pcb[0].name, "init");
-	pcb[0].stack_pointer = STACK_HIGH << 8 | STACK_LOW;
+	strcpy(pcb[0].name, name);
+	pcb[0].stack_pointer = (uint16_t) stack + stack_size - 1;
 
 	current_process = 0;
 
 	enable_timer();
 
 	asm("sei");
+
+	task();
 }
 
 /**
@@ -86,7 +89,7 @@ void os_delay(uint8_t pid, uint32_t ticks) {
 /**
  * Add new task to operating system
  */
-void os_add_task(void (*task)(void), char *name) {
+void os_add_task(char *stack, uint16_t stack_size, void (*task)(void), char *name) {
 	ENTER_CRITICAL_SECTION();
 
 	uint8_t current_pcb = 0;
@@ -102,7 +105,7 @@ void os_add_task(void (*task)(void), char *name) {
 
 	pcb[current_pcb].state = OS_RUNNING_STATE;
 	strcpy(pcb[current_pcb].name, name);
-	pcb[current_pcb].stack_pointer = TOP_OF_MEMORY - current_pcb * STACK_SIZE;
+	pcb[current_pcb].stack_pointer = (uint16_t) stack + stack_size - 1;
 
 	*(uint8_t *) pcb[current_pcb].stack_pointer = (uint8_t) ((uint16_t) task & 0xff);
 	pcb[current_pcb].stack_pointer--;
@@ -114,12 +117,21 @@ void os_add_task(void (*task)(void), char *name) {
 	LEAVE_CRITICAL_SECTION();
 }
 
+/**
+ *
+ * @return Current PID
+ */
+uint8_t os_get_current_process(void) {
+	return current_process;
+}
+
+#include "usart.h"
+
 ISR(TIMER0_COMPARE_MATCH_INTERRUPT) {
 	ticks++;
 
 	for (uint8_t pcb_index = 0; pcb_index < NUMBER_OF_PROCESSES; pcb_index++)
 			if (pcb[pcb_index].delay_ticks > 0) pcb[pcb_index].delay_ticks--;
-
 
 	if (ticks >= QUANTUM_MILLISECOND_LENGTH) {
 		ticks = 0;
