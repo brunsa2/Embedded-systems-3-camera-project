@@ -19,12 +19,36 @@
 #define STACK_HIGH (*((volatile uint8_t *)(0x5e)))
 #define STACK_LOW (*((volatile uint8_t *)(0x5d)))
 
+/* Interrupt ports */
+
+#define MCUCR (*((volatile uint8_t *)(0x55)))
+#define ISC11 3
+#define ISC10 2
+#define ISC01 1
+#define ISC00 0
+
+#define GICR (*((volatile uint8_t *)(0x5b)))
+#define INT1 7
+#define INT0 6
+
+#define INT0_vect _VECTOR(1)
+#define INT1_vect _VECTOR(2)
+		
 /* GPIO ports */
 
 #define DDRD (*((volatile uint8_t *)(0x31)))
+#define PORTD (*((volatile uint8_t *)(0x32)))
+#define PIND (*((volatile uint8_t *)(0x30)))
 
+#define DDRA (*((volatile uint8_t *)(0x3a)))
+#define PORTA (*((volatile uint8_t *)(0x3b)))
+#define PINA (*((volatile uint8_t *)(0x39)))
+
+#define P2 2
+#define P3 3
 #define P4 4
 #define P5 5
+#define P6 6
 
 /* USART I/O ports */
 
