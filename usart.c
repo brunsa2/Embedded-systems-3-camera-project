@@ -12,7 +12,7 @@
 volatile static uint8_t usart_is_initialized = 0;
 
 #define BAUD_HIGH 0
-#define BAUD_LOW 207
+#define BAUD_LOW 1
 
  /**
   * Initialize USART with specified baud rate and options

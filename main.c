@@ -9,18 +9,43 @@
 #define FALSE 0
 #define TRUE 1
 
+// Camera/middle row positioning
 static volatile uint8_t row = 0;
 static volatile uint8_t col = 0;
 static volatile uint8_t active = FALSE;
 static volatile uint8_t right_row = FALSE;
-static volatile uint16_t sum_of_values = 0;
+
+// Auto calibration
+static volatile uint8_t min = 0xff;
+static volatile uint8_t max = 0x00;
+static volatile uint8_t thresh = 0x00;
+
+// Edge detector
+static volatile uint8_t color_mode = 0;
+static volatile uint8_t noise_removal_counter = 0;
+#define NOISE_COUNT 3
+
+// Tracker
+static volatile uint8_t first_col = 0;
+static volatile uint8_t second_col = 0;
+static volatile uint8_t col_waiting_for = 0;
+static volatile uint16_t servo = 1500;
+
+
+void run_servo(void) {
+	if (((first_col + second_col) >> 1) > 90) servo += 20;
+	if (((first_col + second_col) >> 1) < 86) servo -= 20;
+	servo = (servo > 2000) ? 2000 : servo;
+	servo = (servo < 1000) ? 1000 : servo;
+	pwm_set_pulse_length(PWM_CHANNEL_0, servo);
+}
 
 int main(void) {
 	uint8_t result;
-	char input[LINE_LENGTH];
 
 	usart_init(16000000, 9600, USART_TRANSMIT | USART_RECEIVE);
 	console_init(usart_putc, usart_getc);
+	pwm_init();
 	
 	printf("\fEmbedded Systems III TWI test system\r\n\r\n");
 
@@ -133,30 +158,69 @@ int main(void) {
 	asm("sei");
 
 	for (;;) {
-		printf("Place a target and press enter\r\n");
-		fgets(input, LINE_LENGTH, stdin);
 
 		while (!(PIND & (1 << P6)));
+		
+		// VSYNC is high
 		row = 0;
 		col = 0;
-		sum_of_values = 0;
 		active = TRUE;
+		
+		printf("Min: 0x%2x, Max: 0x%2x\r\n", min, max);
+		thresh = (min + max) >> 1;
+		min = 0xff;
+		max = 0x00;
+		printf("Threshold: 0x%2x\r\n", thresh);
+
 		while (PIND & (1 << P6));
+
 		while (active == TRUE);
-		sum_of_values >>= 4;
-		sum_of_values &= 0xff;
-		printf("Value: 0x%2x\r\n", sum_of_values);
+		
+		// Between processing and VSYNC pulse
+		run_servo();
+
 	}
 
 	return 0;
+}
+
+
+
+
+void alert_servo_to_column(uint8_t col) {
+	if (col_waiting_for == 0) {
+		first_col = col;
+		col_waiting_for = 1;
+	}
+	if (col_waiting_for == 1) second_col = col;
 }
 
 // PClk
 ISR(INT0_vect) {
 	uint8_t value = PINA;
 	col++;
-	if (active && right_row && col >=87 && col <= 102) {
-		sum_of_values += value;
+
+	usart_putc('x', NULL);
+
+	if (active && right_row) {
+		min = (value < min) ? value : min;
+		max = (value > max) ? value : max;
+
+		if (value > thresh) usart_putc('*', NULL);
+		else usart_putc('.', NULL);
+		
+		if ((color_mode == 0x00 && value > thresh) || (color_mode == 0xff && value < thresh)) {
+			noise_removal_counter = 0;
+		} else {
+			noise_removal_counter++;
+			if (noise_removal_counter > NOISE_COUNT) {
+				
+				alert_servo_to_column(col);
+
+				noise_removal_counter = 0;
+				color_mode = 0xff - color_mode;
+			}
+		}
 	}
 }
 
@@ -167,6 +231,9 @@ ISR(INT1_vect) {
 	if (active && row > 71) {
 		right_row = FALSE;
 		active = FALSE;
+		usart_putc('\r', NULL);
+		usart_putc('\n', NULL);
 	}
 	col = 0;
+	col_waiting_for = 0;
 }
