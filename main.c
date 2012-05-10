@@ -162,22 +162,25 @@ int main(void) {
 		while (!(PIND & (1 << P6)));
 		
 		// VSYNC is high
+		usart_putc('\f', NULL);
+
 		row = 0;
 		col = 0;
 		active = TRUE;
 		
-		printf("Min: 0x%2x, Max: 0x%2x\r\n", min, max);
+		//printf("Min: 0x%2x, Max: 0x%2x\r\n", min, max);
 		thresh = (min + max) >> 1;
 		min = 0xff;
 		max = 0x00;
-		printf("Threshold: 0x%2x\r\n", thresh);
+		//printf("Threshold: 0x%2x\r\n", thresh);
 
 		while (PIND & (1 << P6));
 
 		while (active == TRUE);
 		
 		// Between processing and VSYNC pulse
-		run_servo();
+		//run_servo();
+		
 
 	}
 
@@ -200,9 +203,18 @@ ISR(INT0_vect) {
 	uint8_t value = PINA;
 	col++;
 
-	usart_putc('x', NULL);
+	if ((row & 0x01) == 0x01) {
+		if ((value >> 5) == 0x00) usart_putc('#', NULL);
+		if ((value >> 5) == 0x01) usart_putc('*', NULL);
+		if ((value >> 5) == 0x02) usart_putc('+', NULL);
+		if ((value >> 5) == 0x03) usart_putc('=', NULL);
+		if ((value >> 5) == 0x04) usart_putc('-', NULL);
+		if ((value >> 5) == 0x05) usart_putc(':', NULL);
+		if ((value >> 5) == 0x06) usart_putc('.', NULL);
+		if ((value >> 5) == 0x07) usart_putc(' ', NULL);
+	}
 
-	if (active && right_row) {
+	/*if (active && right_row) {
 		min = (value < min) ? value : min;
 		max = (value > max) ? value : max;
 
@@ -221,18 +233,23 @@ ISR(INT0_vect) {
 				color_mode = 0xff - color_mode;
 			}
 		}
-	}
+	}*/
 }
 
 // HREF
 ISR(INT1_vect) {
+	if ((row & 0x01) == 0x01) {
+		usart_putc('\r', NULL);
+		usart_putc('\n', NULL);
+	}
+
 	row++;
 	if (row == 71) right_row = TRUE;
 	if (active && row > 71) {
 		right_row = FALSE;
 		active = FALSE;
-		usart_putc('\r', NULL);
-		usart_putc('\n', NULL);
+		//usart_putc('\r', NULL);
+		//usart_putc('\n', NULL);
 	}
 	col = 0;
 	col_waiting_for = 0;
