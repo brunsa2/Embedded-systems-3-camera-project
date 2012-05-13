@@ -48,4 +48,10 @@ int usart_putc(char data, FILE *unused);
  */
 int usart_getc(FILE *unused); 
 
+/**
+ * Check if the USART has received a character
+ * @return Number of available characters from the USART
+ */
+int usart_hasc(void);
+
 #endif

@@ -64,3 +64,14 @@ int usart_getc(FILE *unused) {
 	}
 	return 0;
 }
+
+/**
+ * Check if the USART has received a character
+ * @return Number of available characters from the USART
+ */
+int usart_hasc(void) {
+	if (usart_is_initialized) {
+		return (UCSRA & (1 << RXC)) >> 1;
+	}
+	return 0;
+}
